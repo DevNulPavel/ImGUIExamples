@@ -9,6 +9,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <Helpers.h>
 
 //#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 //#define GLFW_INCLUDE_GLU
@@ -19,8 +20,8 @@
 
 
 
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 480
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 768
 
 GLFWwindow* window = nullptr;
 
@@ -100,6 +101,23 @@ int local_main(int argc, char** argv) {
         return 2;
     }
     
+    // Инициализация отладки
+    if(glDebugMessageCallback){
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        
+        // Коллбек ошибок OpenGL
+        glDebugMessageCallback((GLDEBUGPROC)glDebugOut, 0);
+        
+        // Более высокий уровень отладки
+        // GLuint unusedIds = 0;
+        // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
+    }
+    
+    const unsigned char* version = glGetString(GL_VERSION);
+    printf("OpenGL version = %s\n", version);
+    fflush(stdout);
+    
     // Создание ImGUI контекста
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -115,10 +133,16 @@ int local_main(int argc, char** argv) {
     glfwSetScrollCallback(window, glfwScrollCallback);
     
     // Тестовые переменные
+    ImGuiWindowFlags windowFlags = 0;
+    bool windowOpened = true;
     bool test1 = false;
     bool test2 = false;
     float sliderValue = 0.0f;
     float color[3] = {};
+    bool openFilePressed = false;
+    bool pastePressed = false;
+    int radioButtonValue = 0;
+    int arrowsCounter = 0;
     
     // Главный цикл отрисовки
     while (!glfwWindowShouldClose(window)) {
@@ -131,17 +155,102 @@ int local_main(int argc, char** argv) {
         
         // Тестовое окно
         {
-            ImGui::Begin("Hello, world!");
+            ImGui::SetNextWindowPos(ImVec2(20, 10), ImGuiCond_Once);
+            ImGui::SetNextWindowSize(ImVec2(400, 650), ImGuiCond_Once);
             
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Test 1", &test1);      // Edit bools storing our window open/close state
+            //windowFlags |= ImGuiWindowFlags_NoTitleBar;
+            //windowFlags |= ImGuiWindowFlags_NoScrollbar;
+            windowFlags |= ImGuiWindowFlags_MenuBar;
+            //windowFlags |= ImGuiWindowFlags_NoMove;
+            windowFlags |= ImGuiWindowFlags_NoResize;
+            windowFlags |= ImGuiWindowFlags_NoCollapse;
+            windowFlags |= ImGuiWindowFlags_NoNav;
+            
+            ImGui::Begin("Hello, world!", &windowOpened, windowFlags);
+            
+            // Меню на самом верху окна
+            if (ImGui::BeginMenuBar()){
+                if (ImGui::BeginMenu("File")){
+                    ImGui::MenuItem("Open file", NULL, &openFilePressed);
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Edit")){
+                    ImGui::MenuItem("Paste", NULL, &pastePressed);
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenuBar();
+            }
+            ImGui::Spacing();
+            
+            // Сворачивающееся меню
+            if (ImGui::CollapsingHeader("Help")){
+                ImGui::TextWrapped("Wrapped text.\n");
+                if (ImGui::TreeNode("Three node 1")){
+                    ImGui::Text("Test text 1");
+                    ImGui::TreePop();
+                }
+                if (ImGui::TreeNode("Three node 2")){
+                    ImGui::Text("Test text 2");
+                    ImGui::TreePop();
+                }
+            }
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
+            
+            // Пример RadioButton
+            ImGui::RadioButton("Radio a", &radioButtonValue, 0);
+            ImGui::SameLine();
+            ImGui::RadioButton("Radio b", &radioButtonValue, 1);
+            ImGui::SameLine();
+            ImGui::RadioButton("Radio c", &radioButtonValue, 2);
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            // Цветные кнопки
+            for (int i = 0; i < 3; i++){
+                if (i > 0) ImGui::SameLine();
+                ImGui::PushID(i);
+                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(i/7.0f, 0.7f, 0.7f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.8, 0.8f, 1.0f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(i/7.0f, 0.8f, 0.8f));
+                ImGui::Button("Click");
+                ImGui::PopStyleColor(3);
+                ImGui::PopID();
+            }
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            // Стрелочные кнопки
+            float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+            ImGui::PushButtonRepeat(true);
+            if (ImGui::ArrowButton("##left", ImGuiDir_Left)) { arrowsCounter--; }
+            ImGui::SameLine(0.0f, spacing);
+            if (ImGui::ArrowButton("##right", ImGuiDir_Right)) { arrowsCounter++; }
+            ImGui::PopButtonRepeat();
+            ImGui::SameLine();
+            ImGui::Text("%d", arrowsCounter);
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            // Всплывающее окно
+            ImGui::Text("Hover over me");
+            if (ImGui::IsItemHovered()){
+                ImGui::SetTooltip("I am a tooltip");
+            }
+            
+            ImGui::Text("This is some useful text.");
+            ImGui::Checkbox("Test 1", &test1);
             ImGui::SameLine();
             ImGui::Checkbox("Test 2", &test2);
             
-            ImGui::SliderFloat("float", &sliderValue, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", color); // Edit 3 floats representing a color
+            ImGui::SliderFloat("float", &sliderValue, 0.0f, 1.0f);
+            ImGui::ColorEdit3("clear color", color);
             
-            if (ImGui::Button("Button")){                            // Buttons return true when clicked (most widgets return true when edited/activated)
+            ImGui::Separator();
+            
+            if (ImGui::Button("Button")){
                 printf("Button pressed\n");
                 fflush(stdout);
             }
@@ -150,6 +259,8 @@ int local_main(int argc, char** argv) {
             
             ImGui::Bullet();
             ImGui::Text("Frame time %.1f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            
+            ImGui::BulletText("Bullet text example");
             
             ImGui::End();
         }
