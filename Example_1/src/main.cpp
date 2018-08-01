@@ -132,6 +132,26 @@ int local_main(int argc, char** argv) {
     glfwSetCursorPosCallback(window, glfwCursorCallback);
     glfwSetScrollCallback(window, glfwScrollCallback);*/
     
+    // Setup style
+    ImGui::StyleColorsDark();
+    
+    // Fonts
+    ImGui::GetIO().Fonts->AddFontDefault();
+    // Английский шрифт
+    ImFontConfig configEng;
+    configEng.MergeMode = true;
+    configEng.OversampleH = 2;
+    configEng.OversampleV = 2;
+    const ImWchar* iconRangesEng = ImGui::GetIO().Fonts->GetGlyphRangesDefault();
+    ImFont* droidEngFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("static_res/DroidSans.ttf", 14.0f, &configEng, iconRangesEng);
+    // Русский шрифт
+    ImFontConfig configRus;
+    configRus.MergeMode = true;
+    configRus.OversampleH = 2;
+    configRus.OversampleV = 2;
+    const ImWchar* iconRangesRus = ImGui::GetIO().Fonts->GetGlyphRangesCyrillic(); //const ImWchar iconRanges[] = { 0, 128, 0 };
+    ImFont* droidRusFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("static_res/DroidSans.ttf", 14.0f, &configRus, iconRangesRus);
+    
     // Тестовые переменные
     bool demoWindow = true;
     bool windowOpened = true;
@@ -156,6 +176,9 @@ int local_main(int argc, char** argv) {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        
+        // Включаем шрифт
+        ImGui::PushFont(droidEngFont);
         
         // Стандартное Demo
         {
@@ -336,13 +359,18 @@ int local_main(int argc, char** argv) {
                 ImGui::Spacing();
             }
             
+            ImGui::PushFont(droidRusFont);
+            ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), "Розовый");
+            ImGui::Text("Это русский текст!");
+            ImGui::PopFont();
+            ImGui::Separator();
+            ImGui::Spacing();
+            
             static ImGuiComboFlags flags = 0;
             ImGui::CheckboxFlags("ImGuiComboFlags_PopupAlignLeft", (unsigned int*)&flags, ImGuiComboFlags_PopupAlignLeft);
             
-            ImGui::LabelText("label", "Value");
+           // ImGui::LabelText("label", "Value");
             
-            ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), "Pink");
-            ImGui::Text("This is some useful text.");
             ImGui::Checkbox("Test 1", &test1);
             ImGui::SameLine();
             ImGui::Checkbox("Test 2", &test2);
@@ -362,6 +390,9 @@ int local_main(int argc, char** argv) {
             ImGui::Text("Frame time %.1f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             
             ImGui::BulletText("Bullet text example");
+            
+            // Выключаем шрифт
+            ImGui::PopFont();
             
             ImGui::End();
         }
