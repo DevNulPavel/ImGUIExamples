@@ -64,6 +64,13 @@ endif()
 ####################################################
 message("******** Source libraries search ***********")
 
+# GLEW includes
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../glew/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../glew/include/GL")
+set(IMGUI_LIBRARY_INCLUDES ${IMGUI_LIBRARY_INCLUDES} "${CMAKE_CURRENT_SOURCE_DIR}/../glew/include")
+set(IMGUI_LIBRARY_INCLUDES ${IMGUI_LIBRARY_INCLUDES} "${CMAKE_CURRENT_SOURCE_DIR}/../glew/include/GL")
+
+
 ####################################################
 # Настройка сборки текущего проекта
 ####################################################
@@ -115,9 +122,11 @@ set(ALL_SOURCES
     src/imgui.h
     src/imgui.cpp
     src/imgui_internal.h
+    src/imgui_draw.cpp
     src/imgui_impl_glfw.h
     src/imgui_impl_glfw.cpp
-    src/imgui_draw.cpp
+    src/imgui_impl_opengl3.h
+    src/imgui_impl_opengl3.cpp
     src/stb_rect_pack.h
     src/stb_textedit.h
     src/stb_truetype.h)

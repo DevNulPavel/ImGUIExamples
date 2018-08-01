@@ -65,6 +65,15 @@ endif()
 message("******** Source libraries search ***********")
 
 ##############
+# GLEW library
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libs/glew")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/libs/glew/include")
+set(BASE_LIBRARY_INCLUDES ${BASE_LIBRARY_INCLUDES} "${CMAKE_CURRENT_SOURCE_DIR}/libs/glfw/include")
+set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} libglew)
+add_definitions(-DGLEW_STATIC)
+
+
+##############
 # GLFW library
 # Устанавливаем нужные нам настройки
 message("GLFW including")
