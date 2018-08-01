@@ -123,17 +123,17 @@ int local_main(int argc, char** argv) {
     ImGui::CreateContext();
     
     // Инициализация врапперов ImGui
-    ImGui_ImplGlfw_InitForOpenGL(window, false); // НЕ устанавливаем стандартные коллбеки
+    ImGui_ImplGlfw_InitForOpenGL(window, true); // НЕ устанавливаем стандартные коллбеки
     ImGui_ImplOpenGL3_Init("#version 150");
     
     // Перегрузка обработки клавиш и прочего
-    glfwSetKeyCallback(window, glfwKeyCallback);
+    /*glfwSetKeyCallback(window, glfwKeyCallback);
     glfwSetMouseButtonCallback(window, glfwMouseButtonCallback);
     glfwSetCursorPosCallback(window, glfwCursorCallback);
-    glfwSetScrollCallback(window, glfwScrollCallback);
+    glfwSetScrollCallback(window, glfwScrollCallback);*/
     
     // Тестовые переменные
-    ImGuiWindowFlags windowFlags = 0;
+    bool demoWindow = true;
     bool windowOpened = true;
     bool test1 = false;
     bool test2 = false;
@@ -143,6 +143,10 @@ int local_main(int argc, char** argv) {
     bool pastePressed = false;
     int radioButtonValue = 0;
     int arrowsCounter = 0;
+    int currentComboBoxItem = 0;
+    char inputFieldText[128] = "Hello, world!";
+    float inputFieldFloat = 0.1f;
+    float sliderAngle = 0.0f;
     
     // Главный цикл отрисовки
     while (!glfwWindowShouldClose(window)) {
@@ -153,11 +157,18 @@ int local_main(int argc, char** argv) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         
+        // Стандартное Demo
+        {
+            ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
+            ImGui::ShowDemoWindow(&demoWindow);
+        }
+        
         // Тестовое окно
         {
             ImGui::SetNextWindowPos(ImVec2(20, 10), ImGuiCond_Once);
             ImGui::SetNextWindowSize(ImVec2(400, 650), ImGuiCond_Once);
             
+            ImGuiWindowFlags windowFlags = 0;
             //windowFlags |= ImGuiWindowFlags_NoTitleBar;
             //windowFlags |= ImGuiWindowFlags_NoScrollbar;
             windowFlags |= ImGuiWindowFlags_MenuBar;
@@ -235,17 +246,107 @@ int local_main(int argc, char** argv) {
             ImGui::Spacing();
             
             // Всплывающее окно
-            ImGui::Text("Hover over me");
+            ImGui::Text("Hover over me,");
             if (ImGui::IsItemHovered()){
                 ImGui::SetTooltip("I am a tooltip");
             }
             
+            // Всплывающее окно сложное
+            ImGui::SameLine();
+            ImGui::PushID(0);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
+            ImGui::Text("- or me");
+            ImGui::PopStyleColor(1);
+            ImGui::PopID();
+            if (ImGui::IsItemHovered()){
+                ImGui::BeginTooltip();
+                ImGui::Text("I am a fancy tooltip");
+                static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
+                ImGui::PlotLines("Curve", arr, IM_ARRAYSIZE(arr));
+                ImGui::EndTooltip();
+            }
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            // Combo Box
+            {
+                // Using the _simplified_ one-liner Combo() api here
+                // See "Combo" section for examples of how to use the more complete BeginCombo()/EndCombo() api.
+                const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO" };
+                ImGui::Combo("Combo box", &currentComboBoxItem, items, IM_ARRAYSIZE(items));
+                ImGui::Separator();
+                ImGui::Spacing();
+            }
+            
+            // Полле ввода текста
+            ImGui::InputText("Input text", inputFieldText, IM_ARRAYSIZE(inputFieldText), ImGuiInputTextFlags_None);
+            ImGui::InputFloat("Input float", &inputFieldFloat, 0.1f, 0.5f, "%.1f", ImGuiInputTextFlags_None);
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            // Слайдер
+            ImGui::SliderFloat("Float slider", &sliderValue, 0.0f, 1.0f);
+            ImGui::SliderAngle("Slider angle", &sliderAngle);
+            ImGui::Separator();
+            ImGui::Spacing();
+            
+            // Список
+            {
+                const char* listbox_items[] = { "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon" };
+                static int listbox_item_current = 1;
+                ImGui::ListBox("Listbox\n(single select)", &listbox_item_current, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
+                
+                //static int listbox_item_current2 = 2;
+                //ImGui::PushItemWidth(-1);
+                //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
+                //ImGui::PopItemWidth();
+                
+                ImGui::Separator();
+                ImGui::Spacing();
+            }
+            
+            // Отображение изображения
+            {
+                ImTextureID my_tex_id = ImGui::GetIO().Fonts->TexID;
+                float my_tex_w = (float)ImGui::GetIO().Fonts->TexWidth;
+                float my_tex_h = (float)ImGui::GetIO().Fonts->TexHeight;
+                
+                ImGui::Text("%.0fx%.0f", my_tex_w, my_tex_h);
+                ImVec2 pos = ImGui::GetCursorScreenPos();
+                ImGui::Image(my_tex_id, ImVec2(my_tex_w, my_tex_h), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
+                if (ImGui::IsItemHovered()){
+                    ImGui::BeginTooltip();
+                    float region_sz = 32.0f;
+                    float region_x = ImGui::GetIO().MousePos.x - pos.x - region_sz * 0.5f; if (region_x < 0.0f) region_x = 0.0f; else if (region_x > my_tex_w - region_sz) region_x = my_tex_w - region_sz;
+                    float region_y = ImGui::GetIO().MousePos.y - pos.y - region_sz * 0.5f; if (region_y < 0.0f) region_y = 0.0f; else if (region_y > my_tex_h - region_sz) region_y = my_tex_h - region_sz;
+                    float zoom = 4.0f;
+                    ImGui::Text("Min: (%.2f, %.2f)", region_x, region_y);
+                    ImGui::Text("Max: (%.2f, %.2f)", region_x + region_sz, region_y + region_sz);
+                    ImVec2 uv0 = ImVec2((region_x) / my_tex_w, (region_y) / my_tex_h);
+                    ImVec2 uv1 = ImVec2((region_x + region_sz) / my_tex_w, (region_y + region_sz) / my_tex_h);
+                    ImGui::Image(my_tex_id, ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, ImColor(255,255,255,255), ImColor(255,255,255,128));
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::PushID(0);
+                ImGui::ImageButton(my_tex_id, ImVec2(32,32), ImVec2(0,0), ImVec2(32.0f/my_tex_w,32/my_tex_h), -1, ImColor(0,0,0,255));
+                ImGui::PopID();
+                
+                ImGui::Separator();
+                ImGui::Spacing();
+            }
+            
+            static ImGuiComboFlags flags = 0;
+            ImGui::CheckboxFlags("ImGuiComboFlags_PopupAlignLeft", (unsigned int*)&flags, ImGuiComboFlags_PopupAlignLeft);
+            
+            ImGui::LabelText("label", "Value");
+            
+            ImGui::TextColored(ImVec4(1.0f,0.0f,1.0f,1.0f), "Pink");
             ImGui::Text("This is some useful text.");
             ImGui::Checkbox("Test 1", &test1);
             ImGui::SameLine();
             ImGui::Checkbox("Test 2", &test2);
             
-            ImGui::SliderFloat("float", &sliderValue, 0.0f, 1.0f);
             ImGui::ColorEdit3("clear color", color);
             
             ImGui::Separator();

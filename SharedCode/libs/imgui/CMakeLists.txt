@@ -66,9 +66,7 @@ message("******** Source libraries search ***********")
 
 # GLEW includes
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../glew/include")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../glew/include/GL")
 set(IMGUI_LIBRARY_INCLUDES ${IMGUI_LIBRARY_INCLUDES} "${CMAKE_CURRENT_SOURCE_DIR}/../glew/include")
-set(IMGUI_LIBRARY_INCLUDES ${IMGUI_LIBRARY_INCLUDES} "${CMAKE_CURRENT_SOURCE_DIR}/../glew/include/GL")
 
 
 ####################################################
@@ -123,6 +121,7 @@ set(ALL_SOURCES
     src/imgui.cpp
     src/imgui_internal.h
     src/imgui_draw.cpp
+    src/imgui_demo.cpp
     src/imgui_impl_glfw.h
     src/imgui_impl_glfw.cpp
     src/imgui_impl_opengl3.h
